@@ -1,0 +1,10 @@
+{
+  "name": "workshop-1-first-steps",
+  "private": true,
+  "scripts": {
+    "dev": "serve --no-clipboard ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.6"
+  }
+}

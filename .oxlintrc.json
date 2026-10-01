@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["unicorn", "oxc", "import", "node"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "env": {
+    "builtin": true,
+    "node": true
+  },
+  // training.config.mjs of the template holds {{placeholders}}: not JavaScript
+  // until create-training-kit fills them in.
+  "ignorePatterns": ["template/**"]
+}

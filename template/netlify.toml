@@ -1,0 +1,13 @@
+# The whole training — the workshops site at the root, the deck under /slides/,
+# the PDFs and ZIPs under /downloads/ — is one static folder.
+[build]
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[[headers]]
+  for = "/slides/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

@@ -1,0 +1,14 @@
+# Only read by pnpm; npm and yarn ignore it.
+
+# Astro resolves a handful of its own dependencies from the folder it builds,
+# which pnpm's strict layout does not expose. Hoisting gives Astro the flat
+# node_modules it assumes.
+shamefullyHoist: true
+
+allowBuilds:
+  # Its postinstall downloads a Chromium: training-kit installs one on demand,
+  # only for the PDF exports.
+  playwright-chromium: false
+  # The platform binaries ship as optional dependencies.
+  esbuild: false
+  sharp: false

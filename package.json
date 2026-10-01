@@ -1,0 +1,57 @@
+{
+  "name": "create-training-kit",
+  "version": "0.1.0",
+  "description": "npm create training-kit — scaffolds a training: numbered slides, numbered workshops, and training-kit to build the deck, the workshops site, the PDFs and the ZIPs",
+  "keywords": [
+    "create",
+    "scaffold",
+    "slides",
+    "slidev",
+    "starlight",
+    "training",
+    "training-kit",
+    "workshop"
+  ],
+  "homepage": "https://github.com/EmmanuelDemey/create-training-kit#readme",
+  "bugs": {
+    "url": "https://github.com/EmmanuelDemey/create-training-kit/issues"
+  },
+  "license": "MIT",
+  "author": "Emmanuel Demey <demey.emmanuel@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EmmanuelDemey/create-training-kit.git"
+  },
+  "bin": {
+    "create-training-kit": "./index.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "src",
+    "template"
+  ],
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "lint": "oxlint --deny-warnings",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "knip": "knip",
+    "cpd": "jscpd",
+    "check": "pnpm run format:check && pnpm run lint && pnpm run knip && pnpm run cpd && pnpm run test",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@emmanueldemey/training-kit": "link:../training-kit",
+    "husky": "^9.1.7",
+    "jscpd": "^5.4.0",
+    "knip": "^6.39.0",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "packageManager": "pnpm@12.3.1"
+}

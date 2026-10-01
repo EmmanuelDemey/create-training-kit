@@ -1,0 +1,111 @@
+name: CI
+
+# Every check of `pnpm run check`, one job each so a red pull request says which
+# one failed; then the end-to-end proof: the training this generator writes
+# installs and builds.
+#
+# Until @emmanueldemey/training-kit is on npm, this repository depends on it as
+# `link:../training-kit`: every job checks both repositories out side by side,
+# training-kit from its main branch.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: create-training-kit
+
+jobs:
+  check:
+    name: ${{ matrix.check.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      # One failing check must not hide the state of the others.
+      fail-fast: false
+      matrix:
+        check:
+          - { name: Format (oxfmt), run: pnpm run format:check }
+          - { name: Lint (oxlint), run: pnpm run lint }
+          - { name: Dead code (knip), run: pnpm run knip }
+          - { name: Duplication (jscpd), run: pnpm run cpd }
+          # Vitest adds its `github-actions` reporter on its own under CI: a
+          # failing spec shows up as an annotation on the pull request.
+          - { name: Tests (Vitest), run: pnpm test }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: create-training-kit
+      - uses: actions/checkout@v7
+        with:
+          repository: EmmanuelDemey/training-kit
+          path: training-kit
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: create-training-kit/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: create-training-kit/.nvmrc
+      - run: pnpm install --frozen-lockfile
+        working-directory: training-kit
+      - run: pnpm install --frozen-lockfile
+      - run: ${{ matrix.check.run }}
+
+  scaffold:
+    name: A scaffolded training builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: create-training-kit
+      - uses: actions/checkout@v7
+        with:
+          repository: EmmanuelDemey/training-kit
+          path: training-kit
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: create-training-kit/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: create-training-kit/.nvmrc
+      - run: pnpm install --frozen-lockfile
+        working-directory: training-kit
+
+      - name: Scaffold a training
+        run: |
+          node index.mjs "$RUNNER_TEMP/demo" --yes --title "CI Demo" --author "CI" \
+            --kit "file:$GITHUB_WORKSPACE/training-kit"
+
+      - name: Install it
+        working-directory: ${{ runner.temp }}/demo
+        run: npm install --no-audit --no-fund
+
+      - name: List what the numbering picks up
+        working-directory: ${{ runner.temp }}/demo
+        run: npm run list
+
+      # Without the PDF exports: they need a Chromium download and minutes, and
+      # are non-fatal by design — the deck, the site and the ZIPs are not.
+      - name: Build it
+        working-directory: ${{ runner.temp }}/demo
+        run: npm run build:fast
+
+      - name: Every part is in build/
+        working-directory: ${{ runner.temp }}/demo
+        run: |
+          for file in \
+            build/index.html \
+            build/workshops/1-first-steps/index.html \
+            build/slides/index.html \
+            build/_redirects \
+            build/_headers \
+            build/downloads/ci-demo-participants.zip \
+            build/downloads/ci-demo-solutions.zip \
+            build/downloads/tp/1-first-steps-starter.zip \
+            build/downloads/tp/1-first-steps-solution.zip
+          do
+            test -f "$file" || { echo "::error::$file was not built"; exit 1; }
+          done
+          echo "All parts built."
