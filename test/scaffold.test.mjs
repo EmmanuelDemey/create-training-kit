@@ -1,12 +1,15 @@
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { listNumbered, loadConfig, readWorkshops } from '@emmanueldemey/training-kit';
-import { packageJson, renderTemplate, scaffold, TEMPLATE_DIR } from '../src/scaffold.mjs';
+import { KIT, packageJson, renderTemplate, scaffold, TEMPLATE_DIR } from '../src/scaffold.mjs';
 
 const answers = { title: 'Advanced Vue.js', slug: 'advanced-vue-js', author: 'Jane Doe', playground: true };
 
@@ -36,19 +39,19 @@ test('turns the online editor off in the config when asked', async () => {
 });
 
 test('the package runs training-kit and pins the tools it drives', () => {
-  const manifest = JSON.parse(packageJson({ ...answers, kit: '^0.1.0' }));
+  const manifest = JSON.parse(packageJson({ ...answers, kit: KIT }));
 
   assert.equal(manifest.name, 'advanced-vue-js');
   assert.equal(manifest.scripts.dev, 'training-kit slides');
   assert.equal(manifest.scripts.build, 'training-kit build');
-  assert.equal(manifest.devDependencies['@emmanueldemey/training-kit'], '^0.1.0');
+  assert.equal(manifest.devDependencies['@emmanueldemey/training-kit'], KIT);
   for (const tool of ['@slidev/cli', '@slidev/theme-default', 'astro', '@astrojs/starlight', '@stackblitz/sdk']) {
     assert.ok(manifest.devDependencies[tool], `${tool} is missing`);
   }
 });
 
 test('leaves the StackBlitz SDK out when there is no online editor', () => {
-  const manifest = JSON.parse(packageJson({ ...answers, playground: false, kit: '^0.1.0' }));
+  const manifest = JSON.parse(packageJson({ ...answers, playground: false, kit: KIT }));
 
   assert.equal(manifest.devDependencies['@stackblitz/sdk'], undefined);
 });
@@ -56,7 +59,7 @@ test('leaves the StackBlitz SDK out when there is no online editor', () => {
 test('writes a project that training-kit reads as is: numbered chapters and workshops', async () => {
   const dir = join(await emptyDir(), 'vue');
 
-  await scaffold({ dir, answers: { ...answers, kit: '^0.1.0' } });
+  await scaffold({ dir, answers: { ...answers, kit: KIT } });
 
   assert.ok(existsSync(join(dir, 'package.json')));
   await installKit(dir);
@@ -75,10 +78,21 @@ test('writes a project that training-kit reads as is: numbered chapters and work
   assert.equal(config.title, 'Advanced Vue.js');
 });
 
+test('the CLI depends on the training-kit release it was written for, not on its own version', async () => {
+  const dir = join(await emptyDir(), 'vue');
+  const cli = fileURLToPath(new URL('../bin/create-training-kit.mjs', import.meta.url));
+
+  await promisify(execFile)(process.execPath, [cli, dir, '--yes', '--title', 'Advanced Vue.js']);
+
+  const manifest = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
+  assert.equal(manifest.devDependencies['@emmanueldemey/training-kit'], KIT);
+  assert.equal(KIT, '^0.0.1');
+});
+
 test('never writes over a folder that already holds something', async () => {
   const dir = await emptyDir();
   await writeFile(join(dir, 'notes.md'), 'mine');
 
-  await assert.rejects(scaffold({ dir, answers: { ...answers, kit: '^0.1.0' } }), /is not empty/);
+  await assert.rejects(scaffold({ dir, answers: { ...answers, kit: KIT } }), /is not empty/);
   assert.equal(await readFile(join(dir, 'notes.md'), 'utf8'), 'mine');
 });

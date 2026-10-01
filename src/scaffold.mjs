@@ -25,6 +25,13 @@ const TOOLS = {
 };
 
 /**
+ * The training-kit a new training depends on. The two packages are released
+ * apart, so this is the training-kit release the template was written for, not
+ * the generator's own version: bump it when the template needs a newer one.
+ */
+export const KIT = '^0.0.1';
+
+/**
  * Every file of `templateDir`, its `{{key}}` placeholders filled from `answers`.
  * In JavaScript the value goes in as a literal (`"Vue.js"`, `true`), elsewhere
  * as text. Unknown keys are left alone — `{{ count }}` in a Vue slide is not ours.

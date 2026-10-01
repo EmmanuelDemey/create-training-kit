@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 // npm create training-kit [folder] [-- --title "…" --author "…" --no-playground --yes]
 
-import { readFileSync } from 'node:fs';
 import { basename, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from 'node:util';
-import { scaffold } from '../src/scaffold.mjs';
-
-const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+import { KIT, scaffold } from '../src/scaffold.mjs';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -17,7 +14,7 @@ const { values, positionals } = parseArgs({
     'no-playground': { type: 'boolean', default: false },
     // The training-kit dependency of the new project: a range, or a `file:`
     // path to try an unreleased training-kit.
-    kit: { type: 'string', default: `^${version}` },
+    kit: { type: 'string', default: KIT },
     yes: { type: 'boolean', short: 'y', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },

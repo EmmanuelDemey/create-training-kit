@@ -1,6 +1,6 @@
 {
   "name": "create-training-kit",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "npm create training-kit — scaffolds a training: numbered slides, numbered workshops, and training-kit to build the deck, the workshops site, the PDFs and the ZIPs",
   "keywords": [
     "create",
