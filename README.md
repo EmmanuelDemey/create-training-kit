@@ -104,7 +104,7 @@ pnpm run check     # oxfmt, oxlint, knip, jscpd and Vitest — what the CI and t
 To try the generator with a local training-kit:
 
 ```bash
-node index.mjs ../my-training --yes --title "My training" --kit "file:$PWD/../training-kit"
+node bin/create-training-kit.mjs ../my-training --yes --title "My training" --kit "file:$PWD/../training-kit"
 ```
 
 ## License

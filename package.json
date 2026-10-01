@@ -23,10 +23,10 @@
     "url": "git+https://github.com/EmmanuelDemey/create-training-kit.git"
   },
   "bin": {
-    "create-training-kit": "./index.mjs"
+    "create-training-kit": "./bin/create-training-kit.mjs"
   },
   "files": [
-    "index.mjs",
+    "bin",
     "src",
     "template"
   ],

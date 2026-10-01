@@ -75,7 +75,7 @@ jobs:
 
       - name: Scaffold a training
         run: |
-          node index.mjs "$RUNNER_TEMP/demo" --yes --title "CI Demo" --author "CI" \
+          node bin/create-training-kit.mjs "$RUNNER_TEMP/demo" --yes --title "CI Demo" --author "CI" \
             --kit "file:$GITHUB_WORKSPACE/training-kit"
 
       - name: Install it

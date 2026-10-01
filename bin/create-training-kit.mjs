@@ -5,9 +5,9 @@ import { readFileSync } from 'node:fs';
 import { basename, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from 'node:util';
-import { scaffold } from './src/scaffold.mjs';
+import { scaffold } from '../src/scaffold.mjs';
 
-const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
