@@ -1,5 +1,7 @@
 # create-training-kit
 
+[![CI](https://github.com/EmmanuelDemey/create-training-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/EmmanuelDemey/create-training-kit/actions/workflows/ci.yml)
+
 Scaffolds a training built with
 [@emmanueldemey/training-kit](https://www.npmjs.com/package/@emmanueldemey/training-kit):
 numbered slides, numbered workshops with their solutions, and everything to turn
