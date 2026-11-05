@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --lang fr --no-playground --playground --install --yes]
+// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --lang fr --no-playground --playground --install --no-git --yes]
 
 import { basename, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -21,6 +21,7 @@ const { values, positionals } = parseArgs({
     // path to try an unreleased training-kit.
     kit: { type: 'string', default: KIT },
     install: { type: 'boolean', default: false },
+    'no-git': { type: 'boolean', default: false },
     yes: { type: 'boolean', short: 'y', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },
@@ -36,6 +37,7 @@ if (values.help) {
   --no-playground     no online editor on the workshop pages
   --playground        an online editor even for java, which does not run in it
   --install           install the dependencies, with the manager that ran the command
+  --no-git            no git repository in the new training
   --yes, -y           take the defaults, ask nothing`);
   process.exit(0);
 }
@@ -58,6 +60,20 @@ async function ask(question, fallback) {
   if (!prompt) return fallback;
   const answer = (await prompt.question(`${question}${fallback ? ` (${fallback})` : ''}: `)).trim();
   return answer || fallback;
+}
+
+/**
+ * Starts `dir` as a git repository — unless it is already inside one, a
+ * monorepo for instance, where a nested repository would hide it from the
+ * outer one. Returns what to tell when it could not, '' otherwise: without
+ * git, the training is written all the same.
+ */
+function initGit(dir) {
+  const inside = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], { cwd: dir, encoding: 'utf8' });
+  if (inside.error) return 'git was not found: no repository — run `git init` once it is installed.';
+  if (inside.stdout.trim() === 'true') return '';
+  const init = spawnSync('git', ['init', '--quiet'], { cwd: dir });
+  return init.status === 0 ? '' : '`git init` failed: no repository — run it again in the training.';
 }
 
 try {
@@ -85,6 +101,7 @@ try {
 
   const manager = packageManager(process.env.npm_config_user_agent);
   const where = relative(process.cwd(), dir) || '.';
+  const gitWarning = values['no-git'] ? '' : initGit(dir);
   if (values.install) {
     // pnpm, yarn and npm are .cmd scripts on Windows, which only a shell runs.
     const { status, error } = spawnSync(manager.name, ['install'], {
@@ -106,7 +123,7 @@ try {
   ${manager.run} dev          the deck and the workshops site, live
   ${manager.run} build        the deck, the site, the PDFs and the ZIPs, into build/
 
-Add a chapter: slides/3-<name>.md. Add a workshop: workshops/2-<name>/README.md.
+${gitWarning && `${gitWarning}\n\n`}Add a chapter: slides/3-<name>.md. Add a workshop: workshops/2-<name>/README.md.
 The number at the start of the name is its place.`);
 } catch (error) {
   prompt?.close();

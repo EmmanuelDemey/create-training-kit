@@ -29,6 +29,10 @@ The commands it prints are those of the manager that ran it — `pnpm install`
 and `pnpm dev` after `pnpm create`, `bun run dev` after `bun create`, npm's when
 it cannot tell. `--install` runs the install itself, with that same manager.
 
+The new training starts as a git repository, with nothing committed — unless
+`--no-git`, or it is written inside a repository already (a monorepo), or git
+is not installed: then it says so and writes the training all the same.
+
 ## Options
 
 Options go after `--` with `npm create`:
@@ -47,6 +51,7 @@ npm create training-kit my-training -- --title "Advanced Vue.js" --author "Jane 
 | `--no-playground`    | no online editor on the workshop pages                                                                          |
 | `--playground`       | an online editor even for `java`, where it is off by default                                                    |
 | `--install`          | install the dependencies, with the manager that ran the command (npm, pnpm, yarn or bun)                        |
+| `--no-git`           | no `git init` in the new training — skipped anyway inside an existing repository                                |
 | `--yes`, `-y`        | take the defaults, ask nothing — also the behaviour without a terminal                                          |
 | `--kit <spec>`       | the training-kit dependency to write: a version range, or `file:/path/to/training-kit` to try an unreleased one |
 | `--help`, `-h`       | the list of options                                                                                             |

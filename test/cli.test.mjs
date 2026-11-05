@@ -1,6 +1,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { chmod, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
@@ -10,8 +11,8 @@ import { promisify } from 'node:util';
 const cli = fileURLToPath(new URL('../bin/create-training-kit.mjs', import.meta.url));
 
 /** Runs the CLI as `<manager> create` would: the manager says who it is in npm_config_user_agent. */
-async function create(args, { agent, path = process.env.PATH } = {}) {
-  const dir = join(await mkdtemp(join(tmpdir(), 'create-training-kit-')), 'training');
+async function create(args, { agent, path = process.env.PATH, parent } = {}) {
+  const dir = join(parent ?? (await mkdtemp(join(tmpdir(), 'create-training-kit-'))), 'training');
   const env = { ...process.env, PATH: path, npm_config_user_agent: agent };
   const { stdout } = await promisify(execFile)(process.execPath, [cli, dir, '--yes', ...args], { env });
   return { dir, stdout };
@@ -56,4 +57,35 @@ test('--install runs the install of the manager it was run with, in the new trai
   assert.equal((await readFile(join(dir, 'installed.txt'), 'utf8')).trim(), `${dir} install`);
   assert.doesNotMatch(stdout, /^ {2}pnpm install$/m);
   assert.match(stdout, /^ {2}pnpm dev /m);
+});
+
+test('starts the new training as a git repository', async () => {
+  const { dir } = await create([]);
+
+  assert.ok(existsSync(join(dir, '.git')), 'no .git in the new training');
+});
+
+test('--no-git leaves the new training out of git', async () => {
+  const { dir } = await create(['--no-git']);
+
+  assert.ok(!existsSync(join(dir, '.git')));
+});
+
+test('does not nest a repository in the one the training is written into', async () => {
+  const parent = await mkdtemp(join(tmpdir(), 'monorepo-'));
+  await promisify(execFile)('git', ['init', '--quiet'], { cwd: parent });
+
+  const { dir } = await create([], { parent });
+
+  assert.ok(!existsSync(join(dir, '.git')));
+});
+
+test('still writes the training when git is not installed, and says so', async () => {
+  const empty = await mkdtemp(join(tmpdir(), 'no-git-'));
+
+  const { dir, stdout } = await create([], { path: empty });
+
+  assert.ok(existsSync(join(dir, 'training.config.mjs')));
+  assert.ok(!existsSync(join(dir, '.git')));
+  assert.match(stdout, /git/);
 });
