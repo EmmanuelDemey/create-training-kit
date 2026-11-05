@@ -1,0 +1,8 @@
+{
+  "name": "solution-1-first-steps",
+  "private": true,
+  "description": "Là seulement pour `npm run verify` à la racine de la formation : il lance les tests Maven.",
+  "scripts": {
+    "test": "mvn --batch-mode --quiet test"
+  }
+}

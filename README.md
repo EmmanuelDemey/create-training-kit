@@ -14,8 +14,9 @@ pnpm create training-kit my-training
 yarn create training-kit my-training
 ```
 
-It asks for the title, the author, the stack of the workshops, and whether the
-workshop pages should carry an online editor, then writes the project. Then:
+It asks for the title, the author, the stack of the workshops, the language,
+and whether the workshop pages should carry an online editor, then writes the
+project. Then:
 
 ```bash
 cd my-training
@@ -38,6 +39,7 @@ npm create training-kit my-training -- --title "Advanced Vue.js" --author "Jane 
 | `--title <text>`     | the name of the training — asked otherwise, defaults to the folder name                                         |
 | `--author <text>`    | shown on the cover of the deck and of the handbook                                                              |
 | `--template <stack>` | the workshop starter, with its solution: `vanilla` (default), `vue`, `react`, `node` or `java` — see below      |
+| `--lang <code>`      | the language of the template — slides, READMEs, workshops, comments — and of the site: `en` (default) or `fr`   |
 | `--no-playground`    | no online editor on the workshop pages                                                                          |
 | `--playground`       | an online editor even for `java`, where it is off by default                                                    |
 | `--yes`, `-y`        | take the defaults, ask nothing — also the behaviour without a terminal                                          |
@@ -129,6 +131,13 @@ pnpm run check     # oxfmt, oxlint, knip, jscpd and Vitest — what the CI and t
 workshop, its solution, and any file the stack words its own way
 (`workshops/README.md`, `slides/2-first-steps.md` for Java). A new stack is a
 folder there and an entry in `STACKS` (`src/scaffold.mjs`).
+
+`locales/<lang>/` is laid over both for a language other than English:
+`locales/fr/template/` over `template/`, `locales/fr/stacks/<stack>/` over
+`stacks/<stack>/`. It holds only the files with words in them — code and
+manifests stay those of the English layer. A test fails when a new file with
+words has no translation. A new language is a folder there and an entry in
+`LANGS`.
 
 To try the generator with a local training-kit:
 

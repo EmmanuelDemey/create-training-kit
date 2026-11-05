@@ -9,7 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { listNumbered, loadConfig, readWorkshops } from '@emmanueldemey/training-kit';
-import { KIT, packageJson, renderTemplate, scaffold, TEMPLATE_DIR } from '../src/scaffold.mjs';
+import { KIT, LANGS, packageJson, renderTemplate, scaffold, STACKS, TEMPLATE_DIR } from '../src/scaffold.mjs';
 
 const answers = { title: 'Advanced Vue.js', slug: 'advanced-vue-js', author: 'Jane Doe', playground: true };
 
@@ -156,13 +156,98 @@ test('refuses a stack it has no starter for, naming the ones it has', async () =
   assert.ok(!existsSync(dir));
 });
 
-test('the tests of the node solution pass, and those of its starter do not', async () => {
-  const dir = join(await emptyDir(), 'node');
-  await scaffold({ dir, answers: { ...answers, stack: 'node', kit: KIT } });
+test.each(LANGS)('the tests of the %s node solution pass, and those of its starter do not', async (lang) => {
+  const dir = join(await emptyDir(), `node-${lang}`);
+  await scaffold({ dir, answers: { ...answers, stack: 'node', lang, kit: KIT } });
   const run = (folder) => promisify(execFile)('npm', ['test'], { cwd: join(dir, folder, '1-first-steps') });
 
   await run('solutions');
   await assert.rejects(run('workshops'));
+});
+
+test('a French training says so in its config', async () => {
+  const dir = join(await emptyDir(), 'fr');
+
+  await scaffold({ dir, answers: { ...answers, lang: 'fr', kit: KIT } });
+
+  await installKit(dir);
+  const config = await loadConfig(dir);
+  assert.equal(config.lang, 'fr');
+  assert.equal(config.title, 'Advanced Vue.js');
+});
+
+test('an English training keeps the default language', async () => {
+  const dir = join(await emptyDir(), 'en');
+
+  await scaffold({ dir, answers: { ...answers, kit: KIT } });
+
+  await installKit(dir);
+  assert.equal((await loadConfig(dir)).lang, 'en');
+});
+
+/** The files with no prose in them: code and manifests, the same in every language. */
+const WORDLESS = new Set([
+  'package.json',
+  '.vscode/extensions.json',
+  'workshops/1-first-steps/package.json',
+  'solutions/1-first-steps/package.json',
+  'workshops/1-first-steps/pom.xml',
+  'solutions/1-first-steps/pom.xml',
+  'workshops/1-first-steps/vite.config.js',
+  'solutions/1-first-steps/vite.config.js',
+  'workshops/1-first-steps/src/main.js',
+  'solutions/1-first-steps/src/main.js',
+  'workshops/1-first-steps/src/main.jsx',
+  'solutions/1-first-steps/src/main.jsx',
+]);
+
+/** Every file the scaffold writes, path to content. */
+async function written(dir, extra) {
+  const files = {};
+  for (const path of await scaffold({ dir, answers: { ...answers, ...extra, kit: KIT } })) {
+    files[path] = await readFile(join(dir, path), 'utf8');
+  }
+  return files;
+}
+
+test.each(Object.keys(STACKS))('a French %s training has every text in French', async (stack) => {
+  const root = await emptyDir();
+  const english = await written(join(root, 'en'), { stack });
+  const french = await written(join(root, 'fr'), { stack, lang: 'fr' });
+
+  assert.deepEqual(Object.keys(french).toSorted(), Object.keys(english).toSorted());
+  const untranslated = Object.keys(english).filter((path) => !WORDLESS.has(path) && french[path] === english[path]);
+  assert.deepEqual(untranslated, []);
+  assert.doesNotMatch(Object.values(french).join('\n'), /\{\{\w+\}\}/);
+});
+
+test('refuses a language it has no template for, naming the ones it has', async () => {
+  const dir = join(await emptyDir(), 'de');
+
+  await assert.rejects(scaffold({ dir, answers: { ...answers, lang: 'de', kit: KIT } }), /en, fr/);
+  assert.ok(!existsSync(dir));
+  assert.deepEqual(LANGS, ['en', 'fr']);
+});
+
+test('a French Java online editor says in French that Java does not run there', async () => {
+  const dir = join(await emptyDir(), 'java-fr');
+
+  await scaffold({ dir, answers: { ...answers, stack: 'java', lang: 'fr', kit: KIT } });
+
+  await installKit(dir);
+  const { playground } = await loadConfig(dir);
+  assert.match(playground.limits, /navigateur.*mvn test/);
+});
+
+test('the CLI writes a French training with --lang fr', async () => {
+  const dir = join(await emptyDir(), 'fr');
+  const cli = fileURLToPath(new URL('../bin/create-training-kit.mjs', import.meta.url));
+
+  await promisify(execFile)(process.execPath, [cli, dir, '--yes', '--lang', 'fr', '--title', 'Vue.js avancé']);
+
+  const config = await readFile(join(dir, 'training.config.mjs'), 'utf8');
+  assert.match(config, /lang: 'fr'/);
+  assert.match(config, /title: "Vue\.js avancé"/);
 });
 
 test('never writes over a folder that already holds something', async () => {

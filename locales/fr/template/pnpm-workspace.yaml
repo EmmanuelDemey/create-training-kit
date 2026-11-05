@@ -1,0 +1,14 @@
+# Lu par pnpm seulement ; npm et yarn l'ignorent.
+
+# Astro résout quelques-unes de ses propres dépendances depuis le dossier qu'il
+# construit, ce que la structure stricte de pnpm n'expose pas. Le hoisting donne
+# à Astro le node_modules à plat qu'il suppose.
+shamefullyHoist: true
+
+allowBuilds:
+  # Son postinstall télécharge un Chromium : training-kit en installe un à la
+  # demande, pour les exports PDF seulement.
+  playwright-chromium: false
+  # Les binaires de chaque plateforme arrivent en dépendances optionnelles.
+  esbuild: false
+  sharp: false

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --no-playground --playground --yes]
+// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --lang fr --no-playground --playground --yes]
 
 import { basename, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from 'node:util';
-import { DEFAULT_STACK, KIT, scaffold, STACKS } from '../src/scaffold.mjs';
+import { DEFAULT_STACK, KIT, LANGS, scaffold, STACKS } from '../src/scaffold.mjs';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -12,6 +12,7 @@ const { values, positionals } = parseArgs({
     title: { type: 'string' },
     author: { type: 'string' },
     template: { type: 'string', short: 't' },
+    lang: { type: 'string' },
     playground: { type: 'boolean' },
     'no-playground': { type: 'boolean', default: false },
     // The training-kit dependency of the new project: a range, or a `file:`
@@ -28,6 +29,7 @@ if (values.help) {
   --title <text>      the name of the training (asked otherwise)
   --author <text>     shown on the cover of the deck and of the handbook
   --template <stack>  the workshop starter: ${Object.keys(STACKS).join(', ')} (asked otherwise, ${DEFAULT_STACK} by default)
+  --lang <code>       the language of the template and of the site: ${LANGS.join(', ')} (asked otherwise, en by default)
   --no-playground     no online editor on the workshop pages
   --playground        an online editor even for java, which does not run in it
   --yes, -y           take the defaults, ask nothing`);
@@ -61,6 +63,7 @@ try {
   const author = values.author ?? (await ask('Author, for the covers', ''));
   const stack =
     values.template ?? (await ask(`Stack of the workshops — ${Object.keys(STACKS).join(', ')}`, DEFAULT_STACK));
+  const lang = values.lang ?? (await ask(`Language of the training — ${LANGS.join(', ')}`, 'en'));
   // Java does not run in StackBlitz: its editor is off unless asked for.
   const online = STACKS[stack]?.online ?? true;
   const playground = values['no-playground']
@@ -73,7 +76,7 @@ try {
 
   await scaffold({
     dir,
-    answers: { title, slug: kebab(title) || kebab(basename(dir)), author, stack, playground, kit: values.kit },
+    answers: { title, slug: kebab(title) || kebab(basename(dir)), author, stack, lang, playground, kit: values.kit },
   });
 
   // `npm create` runs through npx, so the agent says which manager the user typed.

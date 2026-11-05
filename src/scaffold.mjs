@@ -1,6 +1,6 @@
 // Writes a new training from template/: a starter deck of two chapters, one
 // workshop with its solution, and the package that builds them. stacks/<stack>/
-// is laid over it.
+// is laid over it, then, for a language other than English, locales/<lang>/.
 
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
@@ -13,9 +13,20 @@ export const TEMPLATE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 
 const STACKS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'stacks');
 
 /**
+ * One folder per language but English, laid over the English files: template/
+ * as locales/<lang>/template/, each stack as locales/<lang>/stacks/<stack>/. It
+ * holds the files with words in them; code and manifests stay the same.
+ */
+const LOCALES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'locales');
+
+/** The languages a training can be written in. English is template/ and stacks/ themselves. */
+export const LANGS = ['en', 'fr'];
+
+/**
  * The starters a training can begin with. `playground` is the online editor of
  * the workshop pages when it is on: the file the learner changes opens next to
- * the README. `online: false` turns it off unless asked — Java does not run in
+ * the README, and `limits`, in each language, says what does not run there.
+ * `online: false` turns it off unless asked — Java does not run in
  * StackBlitz, so the editor there only shows the code.
  */
 export const STACKS = {
@@ -27,12 +38,21 @@ export const STACKS = {
     online: false,
     playground: {
       openFile: ['README.md', 'src/main/java/training/Greeter.java'],
-      limits: 'Java does not run in the browser: read the code here, run `mvn test` on your machine.',
+      limits: {
+        en: 'Java does not run in the browser: read the code here, run `mvn test` on your machine.',
+        fr: 'Java ne tourne pas dans le navigateur : lisez le code ici, lancez `mvn test` sur votre machine.',
+      },
     },
   },
 };
 
 export const DEFAULT_STACK = 'vanilla';
+
+/** The online editor of `stack`, its words in `lang`. */
+function playgroundOf(stack, lang) {
+  const { limits, ...playground } = STACKS[stack].playground;
+  return limits ? { ...playground, limits: limits[lang] } : playground;
+}
 
 /** npm drops these from a published package, so the template ships them renamed. */
 const RENAMED = { _gitignore: '.gitignore' };
@@ -118,13 +138,19 @@ export async function scaffold({ dir, answers }) {
   if (!Object.hasOwn(STACKS, stack)) {
     throw new Error(`no "${stack}" starter — pick one of ${Object.keys(STACKS).join(', ')}`);
   }
-  const filled = { ...answers, playground: answers.playground && STACKS[stack].playground };
+  const lang = answers.lang ?? 'en';
+  if (!LANGS.includes(lang)) {
+    throw new Error(`no "${lang}" template — pick one of ${LANGS.join(', ')}`);
+  }
+  const filled = { ...answers, playground: answers.playground && playgroundOf(stack, lang) };
 
-  const files = {
-    ...(await renderTemplate(TEMPLATE_DIR, filled)),
-    ...(await renderTemplate(join(STACKS_DIR, stack), filled)),
-    'package.json': packageJson(answers),
-  };
+  const layers = [TEMPLATE_DIR, join(STACKS_DIR, stack)];
+  if (lang !== 'en') layers.push(join(LOCALES_DIR, lang, 'template'), join(LOCALES_DIR, lang, 'stacks', stack));
+  const files = {};
+  for (const layer of layers) {
+    if (existsSync(layer)) Object.assign(files, await renderTemplate(layer, filled));
+  }
+  files['package.json'] = packageJson(answers);
   for (const [path, content] of Object.entries(files)) {
     await mkdir(dirname(join(dir, path)), { recursive: true });
     await writeFile(join(dir, path), content);

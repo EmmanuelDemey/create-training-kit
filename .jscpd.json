@@ -1,7 +1,7 @@
 {
   "path": ["."],
   "pattern": "**/*.{mjs,js,ts,astro,css}",
-  "ignore": ["**/node_modules/**", "template/**", "stacks/**"],
+  "ignore": ["**/node_modules/**", "template/**", "stacks/**", "locales/**"],
   "minTokens": 50,
   "threshold": 0,
   "reporters": ["console"],

@@ -11,6 +11,7 @@
   },
   // training.config.mjs of the template holds {{placeholders}}: not JavaScript
   // until create-training-kit fills them in. The starters of stacks/ leave
-  // TODOs, unused parameters included, on purpose.
-  "ignorePatterns": ["template/**", "stacks/**"]
+  // TODOs, unused parameters included, on purpose — and so do their translations
+  // in locales/.
+  "ignorePatterns": ["template/**", "stacks/**", "locales/**"]
 }

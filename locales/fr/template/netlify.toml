@@ -1,0 +1,13 @@
+# Toute la formation — le site des TP à la racine, le deck sous /slides/,
+# les PDF et les ZIP sous /downloads/ — tient dans un seul dossier statique.
+[build]
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[[headers]]
+  for = "/slides/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

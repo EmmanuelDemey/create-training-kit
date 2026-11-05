@@ -2,5 +2,5 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": ["test/**/*.test.mjs", "vitest.config.mjs"],
   "project": ["src/**/*.mjs", "test/**/*.mjs"],
-  "ignore": ["stacks/**", "template/**"]
+  "ignore": ["locales/**", "stacks/**", "template/**"]
 }

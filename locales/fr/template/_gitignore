@@ -1,0 +1,14 @@
+node_modules/
+*.log
+
+# Produit par training-kit : l'entrée du deck, le site et le build.
+deck.generated.md
+.training-kit/
+build/
+
+# Ce que produisent les TP quand on les lance.
+dist/
+target/
+coverage/
+.env.local
+.env.*.local
