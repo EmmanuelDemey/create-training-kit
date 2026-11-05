@@ -25,6 +25,10 @@ npm run dev          # the deck and the site, live — http://localhost:3030 and
 npm run build        # the deck, the site, the PDFs and the ZIPs, into build/
 ```
 
+The commands it prints are those of the manager that ran it — `pnpm install`
+and `pnpm dev` after `pnpm create`, `bun run dev` after `bun create`, npm's when
+it cannot tell. `--install` runs the install itself, with that same manager.
+
 ## Options
 
 Options go after `--` with `npm create`:
@@ -42,6 +46,7 @@ npm create training-kit my-training -- --title "Advanced Vue.js" --author "Jane 
 | `--lang <code>`      | the language of the template — slides, READMEs, workshops, comments — and of the site: `en` (default) or `fr`   |
 | `--no-playground`    | no online editor on the workshop pages                                                                          |
 | `--playground`       | an online editor even for `java`, where it is off by default                                                    |
+| `--install`          | install the dependencies, with the manager that ran the command (npm, pnpm, yarn or bun)                        |
 | `--yes`, `-y`        | take the defaults, ask nothing — also the behaviour without a terminal                                          |
 | `--kit <spec>`       | the training-kit dependency to write: a version range, or `file:/path/to/training-kit` to try an unreleased one |
 | `--help`, `-h`       | the list of options                                                                                             |

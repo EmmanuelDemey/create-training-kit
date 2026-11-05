@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --lang fr --no-playground --playground --yes]
+// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --lang fr --no-playground --playground --install --yes]
 
 import { basename, relative, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from 'node:util';
+import { packageManager } from '../src/package-manager.mjs';
 import { DEFAULT_STACK, KIT, LANGS, scaffold, STACKS } from '../src/scaffold.mjs';
 
 const { values, positionals } = parseArgs({
@@ -18,6 +20,7 @@ const { values, positionals } = parseArgs({
     // The training-kit dependency of the new project: a range, or a `file:`
     // path to try an unreleased training-kit.
     kit: { type: 'string', default: KIT },
+    install: { type: 'boolean', default: false },
     yes: { type: 'boolean', short: 'y', default: false },
     help: { type: 'boolean', short: 'h', default: false },
   },
@@ -32,6 +35,7 @@ if (values.help) {
   --lang <code>       the language of the template and of the site: ${LANGS.join(', ')} (asked otherwise, en by default)
   --no-playground     no online editor on the workshop pages
   --playground        an online editor even for java, which does not run in it
+  --install           install the dependencies, with the manager that ran the command
   --yes, -y           take the defaults, ask nothing`);
   process.exit(0);
 }
@@ -79,18 +83,28 @@ try {
     answers: { title, slug: kebab(title) || kebab(basename(dir)), author, stack, lang, playground, kit: values.kit },
   });
 
-  // `npm create` runs through npx, so the agent says which manager the user typed.
-  const agent = (process.env.npm_config_user_agent ?? 'npm').split('/')[0];
-  const runner = agent === 'npm' ? 'npm run' : agent;
+  const manager = packageManager(process.env.npm_config_user_agent);
   const where = relative(process.cwd(), dir) || '.';
+  if (values.install) {
+    // pnpm, yarn and npm are .cmd scripts on Windows, which only a shell runs.
+    const { status, error } = spawnSync(manager.name, ['install'], {
+      cwd: dir,
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+    });
+    if (status !== 0) {
+      throw new Error(
+        `${manager.name} install failed${error ? ` (${error.message})` : ''} — run it again in ${where}/`,
+      );
+    }
+  }
 
   console.log(`
 ✔ ${title} — in ${where}/
 
-  cd ${where}
-  ${agent} install
-  ${runner} dev          the deck and the workshops site, live
-  ${runner} build        the deck, the site, the PDFs and the ZIPs, into build/
+  cd ${where}${values.install ? '' : `\n  ${manager.name} install`}
+  ${manager.run} dev          the deck and the workshops site, live
+  ${manager.run} build        the deck, the site, the PDFs and the ZIPs, into build/
 
 Add a chapter: slides/3-<name>.md. Add a workshop: workshops/2-<name>/README.md.
 The number at the start of the name is its place.`);
