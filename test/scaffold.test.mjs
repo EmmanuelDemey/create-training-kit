@@ -42,8 +42,11 @@ test('the package runs training-kit and pins the tools it drives', () => {
   const manifest = JSON.parse(packageJson({ ...answers, kit: KIT }));
 
   assert.equal(manifest.name, 'advanced-vue-js');
-  assert.equal(manifest.scripts.dev, 'training-kit slides');
+  assert.equal(manifest.scripts.dev, 'training-kit dev');
+  assert.equal(manifest.scripts.slides, 'training-kit slides');
   assert.equal(manifest.scripts.build, 'training-kit build');
+  assert.equal(manifest.scripts.check, 'training-kit check');
+  assert.equal(manifest.scripts.verify, 'training-kit verify');
   assert.equal(manifest.devDependencies['@emmanueldemey/training-kit'], KIT);
   for (const tool of ['@slidev/cli', '@slidev/theme-default', 'astro', '@astrojs/starlight', '@stackblitz/sdk']) {
     assert.ok(manifest.devDependencies[tool], `${tool} is missing`);
@@ -86,7 +89,80 @@ test('the CLI depends on the training-kit release it was written for, not on its
 
   const manifest = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
   assert.equal(manifest.devDependencies['@emmanueldemey/training-kit'], KIT);
-  assert.equal(KIT, '^0.0.1');
+  assert.equal(KIT, '^0.1.0');
+});
+
+const STARTERS = [
+  { stack: 'vanilla', file: 'app.js' },
+  { stack: 'vue', file: 'src/App.vue' },
+  { stack: 'react', file: 'src/App.jsx' },
+  { stack: 'node', file: 'src/greet.js' },
+  { stack: 'java', file: 'src/main/java/training/Greeter.java' },
+];
+
+test.each(STARTERS)('writes a $stack workshop and its solution, paired by folder name', async ({ stack, file }) => {
+  const dir = join(await emptyDir(), stack);
+
+  await scaffold({ dir, answers: { ...answers, stack, kit: KIT } });
+
+  await installKit(dir);
+  const config = await loadConfig(dir);
+  const { workshops } = await readWorkshops(config);
+  assert.deepEqual(
+    workshops.map((workshop) => workshop.name),
+    ['1-first-steps'],
+  );
+  assert.ok(existsSync(join(dir, 'workshops/1-first-steps', file)), `the starter has no ${file}`);
+  assert.ok(existsSync(join(dir, 'solutions/1-first-steps', file)), `the solution has no ${file}`);
+});
+
+test('the online editor of a stack opens on the file the learner changes', async () => {
+  const dir = join(await emptyDir(), 'vue');
+
+  await scaffold({ dir, answers: { ...answers, stack: 'vue', kit: KIT } });
+
+  await installKit(dir);
+  const { playground } = await loadConfig(dir);
+  assert.deepEqual(playground.openFile, ['README.md', 'src/App.vue']);
+});
+
+test('a Java online editor says that Java does not run there', async () => {
+  const dir = join(await emptyDir(), 'java');
+
+  await scaffold({ dir, answers: { ...answers, stack: 'java', kit: KIT } });
+
+  await installKit(dir);
+  const { playground } = await loadConfig(dir);
+  assert.match(playground.limits, /mvn test/);
+});
+
+test('the CLI leaves the online editor out of a Java training unless asked', async () => {
+  const dir = join(await emptyDir(), 'java');
+  const cli = fileURLToPath(new URL('../bin/create-training-kit.mjs', import.meta.url));
+
+  await promisify(execFile)(process.execPath, [cli, dir, '--yes', '--template', 'java']);
+
+  assert.match(await readFile(join(dir, 'training.config.mjs'), 'utf8'), /playground: false/);
+  assert.ok(existsSync(join(dir, 'workshops/1-first-steps/pom.xml')));
+});
+
+test('refuses a stack it has no starter for, naming the ones it has', async () => {
+  const dir = join(await emptyDir(), 'angular');
+
+  await assert.rejects(
+    scaffold({ dir, answers: { ...answers, stack: 'angular', kit: KIT } }),
+    /vanilla, vue, react, node, java/,
+  );
+  assert.ok(!existsSync(dir));
+});
+
+test('the tests of the node solution pass, and those of its starter do not', async () => {
+  const dir = join(await emptyDir(), 'node');
+  await scaffold({ dir, answers: { ...answers, stack: 'node', kit: KIT } });
+  const run = (folder) => promisify(execFile)('npm', ['test'], { cwd: join(dir, folder, '1-first-steps') });
+
+  await run('solutions');
+  await assert.rejects(run('workshops'));
 });
 
 test('never writes over a folder that already holds something', async () => {

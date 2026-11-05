@@ -1,5 +1,6 @@
 // Writes a new training from template/: a starter deck of two chapters, one
-// workshop with its solution, and the package that builds them.
+// workshop with its solution, and the package that builds them. stacks/<stack>/
+// is laid over it.
 
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
@@ -7,6 +8,31 @@ import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const TEMPLATE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'template');
+
+/** One folder per stack, laid over template/: its workshop, its solution, and any file it words its own way. */
+const STACKS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'stacks');
+
+/**
+ * The starters a training can begin with. `playground` is the online editor of
+ * the workshop pages when it is on: the file the learner changes opens next to
+ * the README. `online: false` turns it off unless asked — Java does not run in
+ * StackBlitz, so the editor there only shows the code.
+ */
+export const STACKS = {
+  vanilla: { playground: { openFile: ['README.md', 'app.js'] } },
+  vue: { playground: { openFile: ['README.md', 'src/App.vue'] } },
+  react: { playground: { openFile: ['README.md', 'src/App.jsx'] } },
+  node: { playground: { openFile: ['README.md', 'src/greet.js'] } },
+  java: {
+    online: false,
+    playground: {
+      openFile: ['README.md', 'src/main/java/training/Greeter.java'],
+      limits: 'Java does not run in the browser: read the code here, run `mvn test` on your machine.',
+    },
+  },
+};
+
+export const DEFAULT_STACK = 'vanilla';
 
 /** npm drops these from a published package, so the template ships them renamed. */
 const RENAMED = { _gitignore: '.gitignore' };
@@ -29,7 +55,7 @@ const TOOLS = {
  * apart, so this is the training-kit release the template was written for, not
  * the generator's own version: bump it when the template needs a newer one.
  */
-export const KIT = '^0.0.1';
+export const KIT = '^0.1.0';
 
 /**
  * Every file of `templateDir`, its `{{key}}` placeholders filled from `answers`.
@@ -66,10 +92,13 @@ export function packageJson({ slug, playground, kit }) {
       type: 'module',
       scripts: {
         list: 'training-kit list',
-        dev: 'training-kit slides',
+        dev: 'training-kit dev',
+        slides: 'training-kit slides',
         site: 'training-kit site',
         build: 'training-kit build',
         'build:fast': 'training-kit build --no-pdf',
+        check: 'training-kit check',
+        verify: 'training-kit verify',
       },
       devDependencies: Object.fromEntries(Object.entries(devDependencies).toSorted(([a], [b]) => (a < b ? -1 : 1))),
       engines: { node: '>=22.12' },
@@ -85,8 +114,15 @@ export async function scaffold({ dir, answers }) {
     throw new Error(`${dir} is not empty — pick a new folder name`);
   }
 
+  const stack = answers.stack ?? DEFAULT_STACK;
+  if (!Object.hasOwn(STACKS, stack)) {
+    throw new Error(`no "${stack}" starter — pick one of ${Object.keys(STACKS).join(', ')}`);
+  }
+  const filled = { ...answers, playground: answers.playground && STACKS[stack].playground };
+
   const files = {
-    ...(await renderTemplate(TEMPLATE_DIR, answers)),
+    ...(await renderTemplate(TEMPLATE_DIR, filled)),
+    ...(await renderTemplate(join(STACKS_DIR, stack), filled)),
     'package.json': packageJson(answers),
   };
   for (const [path, content] of Object.entries(files)) {

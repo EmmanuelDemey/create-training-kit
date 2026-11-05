@@ -10,6 +10,7 @@
     "node": true
   },
   // training.config.mjs of the template holds {{placeholders}}: not JavaScript
-  // until create-training-kit fills them in.
-  "ignorePatterns": ["template/**"]
+  // until create-training-kit fills them in. The starters of stacks/ leave
+  // TODOs, unused parameters included, on purpose.
+  "ignorePatterns": ["template/**", "stacks/**"]
 }

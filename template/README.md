@@ -16,8 +16,11 @@ training.config.mjs
 ```bash
 npm install
 npm run list       # what the numbering picks up, and what it leaves out
-npm run dev        # the deck, live — http://localhost:3030
-npm run site       # the workshops site, live — http://localhost:4321
+npm run dev        # the deck and the site, live — http://localhost:3030 and :4321
+npm run slides     # the deck alone, with Slidev's keyboard shortcuts
+npm run site       # the workshops site alone
+npm run check      # what would break, without building
+npm run verify     # the tests of every solution
 ```
 
 **The number at the start of a name is its place.** `slides/3-routing.md` is

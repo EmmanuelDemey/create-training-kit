@@ -1,16 +1,18 @@
 #!/usr/bin/env node
-// npm create training-kit [folder] [-- --title "…" --author "…" --no-playground --yes]
+// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --no-playground --playground --yes]
 
 import { basename, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from 'node:util';
-import { KIT, scaffold } from '../src/scaffold.mjs';
+import { DEFAULT_STACK, KIT, scaffold, STACKS } from '../src/scaffold.mjs';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
     title: { type: 'string' },
     author: { type: 'string' },
+    template: { type: 'string', short: 't' },
+    playground: { type: 'boolean' },
     'no-playground': { type: 'boolean', default: false },
     // The training-kit dependency of the new project: a range, or a `file:`
     // path to try an unreleased training-kit.
@@ -25,7 +27,9 @@ if (values.help) {
 
   --title <text>      the name of the training (asked otherwise)
   --author <text>     shown on the cover of the deck and of the handbook
+  --template <stack>  the workshop starter: ${Object.keys(STACKS).join(', ')} (asked otherwise, ${DEFAULT_STACK} by default)
   --no-playground     no online editor on the workshop pages
+  --playground        an online editor even for java, which does not run in it
   --yes, -y           take the defaults, ask nothing`);
   process.exit(0);
 }
@@ -55,14 +59,21 @@ try {
   const dir = resolve(folder);
   const title = values.title ?? (await ask('Title of the training', titleCase(basename(dir))));
   const author = values.author ?? (await ask('Author, for the covers', ''));
+  const stack =
+    values.template ?? (await ask(`Stack of the workshops — ${Object.keys(STACKS).join(', ')}`, DEFAULT_STACK));
+  // Java does not run in StackBlitz: its editor is off unless asked for.
+  const online = STACKS[stack]?.online ?? true;
   const playground = values['no-playground']
     ? false
-    : !/^n/i.test(await ask('Online editor on the workshop pages? (Y/n)', 'y'));
+    : (values.playground ??
+      !(online ? /^n/i : /^(?!y)/i).test(
+        await ask(`Online editor on the workshop pages? ${online ? '(Y/n)' : '(y/N)'}`, online ? 'y' : 'n'),
+      ));
   prompt?.close();
 
   await scaffold({
     dir,
-    answers: { title, slug: kebab(title) || kebab(basename(dir)), author, playground, kit: values.kit },
+    answers: { title, slug: kebab(title) || kebab(basename(dir)), author, stack, playground, kit: values.kit },
   });
 
   // `npm create` runs through npx, so the agent says which manager the user typed.
@@ -75,8 +86,7 @@ try {
 
   cd ${where}
   ${agent} install
-  ${runner} dev          the deck, live
-  ${runner} site         the workshops site, live
+  ${runner} dev          the deck and the workshops site, live
   ${runner} build        the deck, the site, the PDFs and the ZIPs, into build/
 
 Add a chapter: slides/3-<name>.md. Add a workshop: workshops/2-<name>/README.md.

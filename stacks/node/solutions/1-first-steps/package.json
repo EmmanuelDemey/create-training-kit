@@ -1,0 +1,12 @@
+{
+  "name": "workshop-1-first-steps",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:watch": "node --test --watch"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

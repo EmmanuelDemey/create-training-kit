@@ -8,6 +8,7 @@ build/
 
 # What the workshops produce when they are run.
 dist/
+target/
 coverage/
 .env.local
 .env.*.local
