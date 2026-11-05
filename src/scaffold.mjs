@@ -128,6 +128,15 @@ export function packageJson({ slug, playground, kit }) {
   )}\n`;
 }
 
+/** The folders that hold the example — chapters, workshop, solution — and stay, empty, in an empty training. */
+const EXAMPLE_DIRS = ['slides', 'workshops', 'solutions'];
+
+/** `files` with the example folders emptied: a `.gitkeep` each, so git keeps them. */
+function emptied(files) {
+  const kept = Object.entries(files).filter(([path]) => !EXAMPLE_DIRS.some((folder) => path.startsWith(`${folder}/`)));
+  return Object.fromEntries([...kept, ...EXAMPLE_DIRS.map((folder) => [`${folder}/.gitkeep`, ''])]);
+}
+
 /** Writes the training into `dir`, which must be missing or empty. */
 export async function scaffold({ dir, answers }) {
   if (existsSync(dir) && (await readdir(dir)).length > 0) {
@@ -142,14 +151,21 @@ export async function scaffold({ dir, answers }) {
   if (!LANGS.includes(lang)) {
     throw new Error(`no "${lang}" template — pick one of ${LANGS.join(', ')}`);
   }
-  const filled = { ...answers, playground: answers.playground && playgroundOf(stack, lang) };
+  // An empty training has no starter, so its online editor keeps training-kit's defaults.
+  const filled = { ...answers, playground: answers.playground && (answers.empty || playgroundOf(stack, lang)) };
 
-  const layers = [TEMPLATE_DIR, join(STACKS_DIR, stack)];
-  if (lang !== 'en') layers.push(join(LOCALES_DIR, lang, 'template'), join(LOCALES_DIR, lang, 'stacks', stack));
-  const files = {};
-  for (const layer of layers) {
-    if (existsSync(layer)) Object.assign(files, await renderTemplate(layer, filled));
+  const layers = [TEMPLATE_DIR, ...(answers.empty ? [] : [join(STACKS_DIR, stack)])];
+  if (lang !== 'en') {
+    layers.push(
+      join(LOCALES_DIR, lang, 'template'),
+      ...(answers.empty ? [] : [join(LOCALES_DIR, lang, 'stacks', stack)]),
+    );
   }
+  const rendered = {};
+  for (const layer of layers) {
+    if (existsSync(layer)) Object.assign(rendered, await renderTemplate(layer, filled));
+  }
+  const files = answers.empty ? emptied(rendered) : rendered;
   files['package.json'] = packageJson(answers);
   for (const [path, content] of Object.entries(files)) {
     await mkdir(dirname(join(dir, path)), { recursive: true });

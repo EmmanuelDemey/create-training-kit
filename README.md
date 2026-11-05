@@ -41,20 +41,21 @@ Options go after `--` with `npm create`:
 npm create training-kit my-training -- --title "Advanced Vue.js" --author "Jane Doe" --yes
 ```
 
-| Option               |                                                                                                                 |
-| -------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `[folder]`           | where to write the training — asked if missing. Must be empty or not exist                                      |
-| `--title <text>`     | the name of the training — asked otherwise, defaults to the folder name                                         |
-| `--author <text>`    | shown on the cover of the deck and of the handbook                                                              |
-| `--template <stack>` | the workshop starter, with its solution: `vanilla` (default), `vue`, `react`, `node` or `java` — see below      |
-| `--lang <code>`      | the language of the template — slides, READMEs, workshops, comments — and of the site: `en` (default) or `fr`   |
-| `--no-playground`    | no online editor on the workshop pages                                                                          |
-| `--playground`       | an online editor even for `java`, where it is off by default                                                    |
-| `--install`          | install the dependencies, with the manager that ran the command (npm, pnpm, yarn or bun)                        |
-| `--no-git`           | no `git init` in the new training — skipped anyway inside an existing repository                                |
-| `--yes`, `-y`        | take the defaults, ask nothing — also the behaviour without a terminal                                          |
-| `--kit <spec>`       | the training-kit dependency to write: a version range, or `file:/path/to/training-kit` to try an unreleased one |
-| `--help`, `-h`       | the list of options                                                                                             |
+| Option               |                                                                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `[folder]`           | where to write the training — asked if missing. Must be empty or not exist                                                   |
+| `--title <text>`     | the name of the training — asked otherwise, defaults to the folder name                                                      |
+| `--author <text>`    | shown on the cover of the deck and of the handbook                                                                           |
+| `--template <stack>` | the workshop starter, with its solution: `vanilla` (default), `vue`, `react`, `node` or `java` — see below                   |
+| `--lang <code>`      | the language of the template — slides, READMEs, workshops, comments — and of the site: `en` (default) or `fr`                |
+| `--no-playground`    | no online editor on the workshop pages                                                                                       |
+| `--playground`       | an online editor even for `java`, where it is off by default                                                                 |
+| `--empty`            | no example: `slides/`, `workshops/` and `solutions/` written empty, the config and the rest as usual — not with `--template` |
+| `--install`          | install the dependencies, with the manager that ran the command (npm, pnpm, yarn or bun)                                     |
+| `--no-git`           | no `git init` in the new training — skipped anyway inside an existing repository                                             |
+| `--yes`, `-y`        | take the defaults, ask nothing — also the behaviour without a terminal                                                       |
+| `--kit <spec>`       | the training-kit dependency to write: a version range, or `file:/path/to/training-kit` to try an unreleased one              |
+| `--help`, `-h`       | the list of options                                                                                                          |
 
 ### Stacks
 
@@ -95,6 +96,9 @@ my-training/
   .vscode/extensions.json   the Slidev and Astro extensions
   .gitignore
 ```
+
+With `--empty`, the three numbered folders are left empty (a `.gitkeep` each)
+and the rest is the same: for those who know the tool and start from scratch.
 
 The example builds as is: `npm run build` produces the deck, the site with the
 workshop page and its online editor, both PDFs, and the ZIPs.

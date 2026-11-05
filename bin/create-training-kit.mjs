@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --lang fr --no-playground --playground --install --no-git --yes]
+// npm create training-kit [folder] [-- --title "…" --author "…" --template vue --lang fr --no-playground --playground --empty --install --no-git --yes]
 
 import { basename, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -20,6 +20,7 @@ const { values, positionals } = parseArgs({
     // The training-kit dependency of the new project: a range, or a `file:`
     // path to try an unreleased training-kit.
     kit: { type: 'string', default: KIT },
+    empty: { type: 'boolean', default: false },
     install: { type: 'boolean', default: false },
     'no-git': { type: 'boolean', default: false },
     yes: { type: 'boolean', short: 'y', default: false },
@@ -36,6 +37,7 @@ if (values.help) {
   --lang <code>       the language of the template and of the site: ${LANGS.join(', ')} (asked otherwise, en by default)
   --no-playground     no online editor on the workshop pages
   --playground        an online editor even for java, which does not run in it
+  --empty             no example chapters nor workshop: the folders, empty, and the config
   --install           install the dependencies, with the manager that ran the command
   --no-git            no git repository in the new training
   --yes, -y           take the defaults, ask nothing`);
@@ -77,15 +79,19 @@ function initGit(dir) {
 }
 
 try {
+  if (values.empty && values.template) {
+    throw new Error('--empty writes no workshop, so no --template to start it with — drop one of them');
+  }
   const folder = positionals[0] ?? (await ask('Folder of the new training', 'my-training'));
   const dir = resolve(folder);
   const title = values.title ?? (await ask('Title of the training', titleCase(basename(dir))));
   const author = values.author ?? (await ask('Author, for the covers', ''));
-  const stack =
-    values.template ?? (await ask(`Stack of the workshops — ${Object.keys(STACKS).join(', ')}`, DEFAULT_STACK));
+  const stack = values.empty
+    ? DEFAULT_STACK
+    : (values.template ?? (await ask(`Stack of the workshops — ${Object.keys(STACKS).join(', ')}`, DEFAULT_STACK)));
   const lang = values.lang ?? (await ask(`Language of the training — ${LANGS.join(', ')}`, 'en'));
   // Java does not run in StackBlitz: its editor is off unless asked for.
-  const online = STACKS[stack]?.online ?? true;
+  const online = values.empty || (STACKS[stack]?.online ?? true);
   const playground = values['no-playground']
     ? false
     : (values.playground ??
@@ -96,7 +102,16 @@ try {
 
   await scaffold({
     dir,
-    answers: { title, slug: kebab(title) || kebab(basename(dir)), author, stack, lang, playground, kit: values.kit },
+    answers: {
+      title,
+      slug: kebab(title) || kebab(basename(dir)),
+      author,
+      stack,
+      lang,
+      playground,
+      empty: values.empty,
+      kit: values.kit,
+    },
   });
 
   const manager = packageManager(process.env.npm_config_user_agent);
@@ -123,7 +138,11 @@ try {
   ${manager.run} dev          the deck and the workshops site, live
   ${manager.run} build        the deck, the site, the PDFs and the ZIPs, into build/
 
-${gitWarning && `${gitWarning}\n\n`}Add a chapter: slides/3-<name>.md. Add a workshop: workshops/2-<name>/README.md.
+${gitWarning && `${gitWarning}\n\n`}${
+    values.empty
+      ? 'First chapter: slides/1-<name>.md. First workshop: workshops/1-<name>/README.md,\nits solution in solutions/1-<name>/.'
+      : 'Add a chapter: slides/3-<name>.md. Add a workshop: workshops/2-<name>/README.md.'
+  }
 The number at the start of the name is its place.`);
 } catch (error) {
   prompt?.close();

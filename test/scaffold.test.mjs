@@ -257,3 +257,26 @@ test('never writes over a folder that already holds something', async () => {
   await assert.rejects(scaffold({ dir, answers: { ...answers, kit: KIT } }), /is not empty/);
   assert.equal(await readFile(join(dir, 'notes.md'), 'utf8'), 'mine');
 });
+
+test.each(LANGS)(
+  'an empty %s training has the folders training-kit reads, and nothing numbered in them',
+  async (lang) => {
+    const dir = join(await emptyDir(), `empty-${lang}`);
+
+    const paths = await scaffold({ dir, answers: { ...answers, lang, empty: true, kit: KIT } });
+
+    assert.deepEqual(paths.filter((path) => /^(slides|workshops|solutions)\//.test(path)).toSorted(), [
+      'slides/.gitkeep',
+      'solutions/.gitkeep',
+      'workshops/.gitkeep',
+    ]);
+    await installKit(dir);
+    const config = await loadConfig(dir);
+    const { entries: chapters } = await listNumbered(config.paths.slides, { type: 'file', extension: '.md' });
+    const { workshops } = await readWorkshops(config);
+    assert.deepEqual(chapters, []);
+    assert.deepEqual(workshops, []);
+    assert.equal(config.title, 'Advanced Vue.js');
+    assert.equal(config.lang, lang);
+  },
+);

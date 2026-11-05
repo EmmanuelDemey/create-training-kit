@@ -89,3 +89,19 @@ test('still writes the training when git is not installed, and says so', async (
   assert.ok(!existsSync(join(dir, '.git')));
   assert.match(stdout, /git/);
 });
+
+test('--empty writes the skeleton without the example, and says where the first ones go', async () => {
+  const { dir, stdout } = await create(['--empty']);
+
+  assert.ok(existsSync(join(dir, 'training.config.mjs')));
+  assert.ok(!existsSync(join(dir, 'slides/1-introduction.md')));
+  assert.ok(!existsSync(join(dir, 'workshops/1-first-steps')));
+  assert.match(stdout, /slides\/1-<name>\.md/);
+  assert.match(stdout, /workshops\/1-<name>\/README\.md/);
+});
+
+test('--empty refuses a --template, which would have no workshop to start', async () => {
+  await assert.rejects(create(['--empty', '--template', 'vue']), ({ stderr }) =>
+    /--empty writes no workshop/.test(stderr),
+  );
+});
