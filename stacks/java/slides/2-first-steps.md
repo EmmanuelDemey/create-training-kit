@@ -1,5 +1,6 @@
 ---
-layout: section
+layout: cover
+background: https://cover.sli.dev
 ---
 
 # First steps
@@ -14,8 +15,11 @@ static String greet(String name) {
 }
 ```
 
-<v-click>
+---
+layout: section
+class: text-white bg-gradient-to-br from-emerald-600 to-teal-700
+---
 
-Then open **workshop 1** — `workshops/1-first-steps/`.
+# Workshop 1 — First steps
 
-</v-click>
+workshops/1-first-steps/

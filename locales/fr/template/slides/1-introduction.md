@@ -1,5 +1,6 @@
 ---
-layout: section
+layout: cover
+background: https://cover.sli.dev
 ---
 
 # Introduction

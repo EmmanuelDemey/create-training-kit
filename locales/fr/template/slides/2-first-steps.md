@@ -1,5 +1,6 @@
 ---
-layout: section
+layout: cover
+background: https://cover.sli.dev
 ---
 
 # Premiers pas
@@ -14,8 +15,11 @@ const greet = (name) => `Bonjour, ${name} !`;
 console.log(greet('tout le monde'));
 ```
 
-<v-click>
+---
+layout: section
+class: text-white bg-gradient-to-br from-emerald-600 to-teal-700
+---
 
-Ouvrez ensuite le **TP 1** — `workshops/1-first-steps/`.
+# TP 1 — Premiers pas
 
-</v-click>
+workshops/1-first-steps/
