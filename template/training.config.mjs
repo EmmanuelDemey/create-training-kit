@@ -26,9 +26,6 @@ export default defineConfig({
   //   { template: 'node', openFile: ['README.md', 'src/App.vue'], limits: 'What does not run online.' }
   playground: {{playground}},
 
-  // For the "edit this page" and "browse the folder" links of the site:
-  // repository: { url: 'https://github.com/me/my-training', branch: 'main', dir: '' },
-
   // Any Slidev headmatter: https://sli.dev/custom/#headmatter
   deck: {
     theme: 'default',

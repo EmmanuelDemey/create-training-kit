@@ -29,9 +29,6 @@ export default defineConfig({
   //   { template: 'node', openFile: ['README.md', 'src/App.vue'], limits: 'Ce qui ne tourne pas en ligne.' }
   playground: {{playground}},
 
-  // Pour les liens « modifier cette page » et « parcourir le dossier » du site :
-  // repository: { url: 'https://github.com/me/my-training', branch: 'main', dir: '' },
-
   // N'importe quel headmatter Slidev : https://sli.dev/custom/#headmatter
   deck: {
     theme: 'default',
