@@ -89,7 +89,7 @@ test('the CLI depends on the training-kit release it was written for, not on its
 
   const manifest = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
   assert.equal(manifest.devDependencies['@emmanueldemey/training-kit'], KIT);
-  assert.equal(KIT, '^0.2.0');
+  assert.equal(KIT, '^0.3.0');
 });
 
 const STARTERS = [

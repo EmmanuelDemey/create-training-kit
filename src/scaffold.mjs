@@ -75,7 +75,7 @@ const TOOLS = {
  * apart, so this is the training-kit release the template was written for, not
  * the generator's own version: bump it when the template needs a newer one.
  */
-export const KIT = '^0.2.0';
+export const KIT = '^0.3.0';
 
 /**
  * Every file of `templateDir`, its `{{key}}` placeholders filled from `answers`.
